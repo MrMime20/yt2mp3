@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serverless YT to MP3 Converter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="converter-container">
+        <h2>YouTube to MP3 Converter</h2>
+        <p>Convert YouTube videos to audio entirely from your browser.</p>
+        
+        <div class="input-group">
+            <input type="text" id="youtube-url" placeholder="Paste YouTube link here (e.g., https://www.youtube.com/watch?v=...)">
+            <button id="convert-btn">Convert to MP3</button>
+        </div>
+
+        <div id="status-message" class="hidden">Processing... Please wait.</div>
+        
+        <div id="download-box" class="hidden">
+            <p>Your file is ready!</p>
+            <a id="download-link" href="#" download>Download MP3</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
