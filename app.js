@@ -12,20 +12,32 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         return;
     }
 
-    // Extract the raw 11-character string from the regex array match
+    // CRITICAL FIX: The [1] pulls the raw text string out of the regex match array
     const videoId = videoIdMatch[1]; 
 
     // Reset UI view states
     statusMsg.classList.remove('hidden');
     downloadBox.classList.add('hidden');
-    statusMsg.innerText = "Connecting to public conversion server...";
+    statusMsg.innerText = "Connecting to an open conversion node...";
 
-    // 2. Query a completely open, keyless mirror endpoint
-    const apiEndpoint = `https://vexdw.com{videoId}&format=mp3`;
+    // 2. Query a completely open, keyless serverless endpoint
+    const apiEndpoint = 'https://cobalt.tools';
 
     try {
-        // No custom 'x-rapidapi-key' headers are required here
-        const response = await fetch(apiEndpoint, { method: 'GET' });
+        // Cobalt requires a POST request containing the target URL configuration
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: `https://youtube.com{videoId}`,
+                isAudioOnly: true,
+                audioFormat: 'mp3',
+                vCodec: 'h264'
+            })
+        });
 
         if (!response.ok) {
             throw new Error(`Server responded with status: ${response.status}`);
@@ -34,18 +46,16 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         const data = await response.json();
 
         // 3. Evaluate the payload response structure
-        if (data && data.downloadUrl) {
+        if (data && data.url) {
             statusMsg.classList.add('hidden');
             downloadBox.classList.remove('hidden');
-            downloadLink.href = data.downloadUrl; 
+            downloadLink.href = data.url; 
             downloadLink.setAttribute('target', '_blank'); 
-        } else if (data && data.status === 'processing') {
-            statusMsg.innerText = "The video is spinning up. Click convert again in a few seconds...";
         } else {
-            statusMsg.innerText = "Conversion failed. Please try a different video link.";
+            statusMsg.innerText = "Conversion failed. The node rejected the video stream.";
         }
     } catch (error) {
         console.error("Fetch error details:", error);
-        statusMsg.innerText = "Connection failed. The public API node might be offline or rate-limiting traffic.";
+        statusMsg.innerText = "Connection failed. The endpoint might be down or blocking the origin domain.";
     }
 });
