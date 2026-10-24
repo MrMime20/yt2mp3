@@ -12,17 +12,18 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         return;
     }
 
+    // Capture index 1 of the regex array to isolate the 11-character video string
     const videoId = videoIdMatch[1]; 
 
     // Reset UI view states
     statusMsg.classList.remove('hidden');
     downloadBox.classList.add('hidden');
-    statusMsg.innerText = "Connecting to an open conversion node via CORS proxy...";
+    statusMsg.innerText = "Connecting to public conversion nodes...";
 
-    // 2. Direct Target API Endpoint
+    // 2. Target public API conversion node 
     const targetUrl = `https://vexdw.com{videoId}&format=mp3`;
     
-    // Wrap the target URL inside the AllOrigins open proxy to bypass the browser block
+    // Funnel request through api.allorigins.win to strip out local CORS barriers
     const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
 
     try {
@@ -34,17 +35,17 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
 
         const proxyData = await response.json();
         
-        // AllOrigins returns the target's response inside a text string named "contents"
+        // Parse the embedded text string response body returned by the proxy
         const data = JSON.parse(proxyData.contents);
 
-        // 3. Process the payload back inside your layout
+        // 3. Process data strings into UI fields
         if (data && data.downloadUrl) {
             statusMsg.classList.add('hidden');
             downloadBox.classList.remove('hidden');
             downloadLink.href = data.downloadUrl; 
             downloadLink.setAttribute('target', '_blank'); 
         } else if (data && data.status === 'processing') {
-            statusMsg.innerText = "The pipeline is warming up the file. Wait 5 seconds and click Convert again!";
+            statusMsg.innerText = "The pipeline is generating your file. Wait 5 seconds and click Convert again!";
         } else {
             statusMsg.innerText = "Conversion node rejected the video stream. Try another link.";
         }
