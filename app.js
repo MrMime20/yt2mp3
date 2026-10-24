@@ -12,40 +12,40 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         return;
     }
 
-    const videoId = videoIdMatch[1];
+    // Extract the raw 11-character string from the regex array match
+    const videoId = videoIdMatch[1]; 
 
     // Reset UI view states
     statusMsg.classList.remove('hidden');
     downloadBox.classList.add('hidden');
-    statusMsg.innerText = "Connecting to conversion pipeline...";
+    statusMsg.innerText = "Connecting to public conversion server...";
 
-    // 2. Query a free, public conversion API fetch endpoint 
-    // Note: RapidAPI hosts several free "Youtube MP3" endpoints you can subscribe to.
-    const apiEndpoint = `https://rapidapi.com{videoId}`;
-    const apiKey = 'YOUR_RAPIDAPI_KEY_HERE'; // Replace with a key from rapidapi.com
+    // 2. Query a completely open, keyless mirror endpoint
+    const apiEndpoint = `https://vexdw.com{videoId}&format=mp3`;
 
     try {
-        const response = await fetch(apiEndpoint, {
-            method: 'GET',
-            headers: {
-                'x-rapidapi-key': apiKey,
-                'x-rapidapi-host': '://rapidapi.com'
-            }
-        });
+        // No custom 'x-rapidapi-key' headers are required here
+        const response = await fetch(apiEndpoint, { method: 'GET' });
+
+        if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+        }
 
         const data = await response.json();
 
-        if (data.status === 'ok' && data.link) {
-            // 3. Successful conversion: update UI and bind download URL
+        // 3. Evaluate the payload response structure
+        if (data && data.downloadUrl) {
             statusMsg.classList.add('hidden');
             downloadBox.classList.remove('hidden');
-            downloadLink.href = data.link; 
-            downloadLink.setAttribute('target', '_blank'); // Opens download stream safely
+            downloadLink.href = data.downloadUrl; 
+            downloadLink.setAttribute('target', '_blank'); 
+        } else if (data && data.status === 'processing') {
+            statusMsg.innerText = "The video is spinning up. Click convert again in a few seconds...";
         } else {
-            statusMsg.innerText = `Error: ${data.msg || 'Conversion failed. Please try another link.'}`;
+            statusMsg.innerText = "Conversion failed. Please try a different video link.";
         }
     } catch (error) {
-        console.error(error);
-        statusMsg.innerText = "An explicit connection error occurred. Check network logs.";
+        console.error("Fetch error details:", error);
+        statusMsg.innerText = "Connection failed. The public API node might be offline or rate-limiting traffic.";
     }
 });
