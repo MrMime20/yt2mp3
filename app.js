@@ -12,50 +12,44 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         return;
     }
 
-    // CRITICAL FIX: The [1] pulls the raw text string out of the regex match array
     const videoId = videoIdMatch[1]; 
 
     // Reset UI view states
     statusMsg.classList.remove('hidden');
     downloadBox.classList.add('hidden');
-    statusMsg.innerText = "Connecting to an open conversion node...";
+    statusMsg.innerText = "Connecting to an open conversion node via CORS proxy...";
 
-    // 2. Query a completely open, keyless serverless endpoint
-    const apiEndpoint = 'https://cobalt.tools';
+    // 2. Direct Target API Endpoint
+    const targetUrl = `https://vexdw.com{videoId}&format=mp3`;
+    
+    // Wrap the target URL inside the AllOrigins open proxy to bypass the browser block
+    const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
 
     try {
-        // Cobalt requires a POST request containing the target URL configuration
-        const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                url: `https://youtube.com{videoId}`,
-                isAudioOnly: true,
-                audioFormat: 'mp3',
-                vCodec: 'h264'
-            })
-        });
+        const response = await fetch(proxyUrl, { method: 'GET' });
 
         if (!response.ok) {
-            throw new Error(`Server responded with status: ${response.status}`);
+            throw new Error(`Proxy error code: ${response.status}`);
         }
 
-        const data = await response.json();
+        const proxyData = await response.json();
+        
+        // AllOrigins returns the target's response inside a text string named "contents"
+        const data = JSON.parse(proxyData.contents);
 
-        // 3. Evaluate the payload response structure
-        if (data && data.url) {
+        // 3. Process the payload back inside your layout
+        if (data && data.downloadUrl) {
             statusMsg.classList.add('hidden');
             downloadBox.classList.remove('hidden');
-            downloadLink.href = data.url; 
+            downloadLink.href = data.downloadUrl; 
             downloadLink.setAttribute('target', '_blank'); 
+        } else if (data && data.status === 'processing') {
+            statusMsg.innerText = "The pipeline is warming up the file. Wait 5 seconds and click Convert again!";
         } else {
-            statusMsg.innerText = "Conversion failed. The node rejected the video stream.";
+            statusMsg.innerText = "Conversion node rejected the video stream. Try another link.";
         }
     } catch (error) {
         console.error("Fetch error details:", error);
-        statusMsg.innerText = "Connection failed. The endpoint might be down or blocking the origin domain.";
+        statusMsg.innerText = "Connection dropped. The public proxy node may be under heavy load.";
     }
 });
